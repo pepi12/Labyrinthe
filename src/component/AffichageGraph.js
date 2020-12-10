@@ -208,7 +208,8 @@ class AffichageGraph extends React.Component {
                 hierarchical: false,
             },
             nodes: {
-                shape: 'square'
+                shape: 'square',
+                size : 50
             },
             interaction: {
                 dragNodes: false,

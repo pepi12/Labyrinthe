@@ -1,5 +1,9 @@
 import React from 'react';
 import Graph from "react-graph-vis";
+
+//Sert à s'assurer que le labyrinthe soit finissable
+var murPourFinirLabyrinthe = 0;
+
 /*
     Auteur : Bastien Boulanger
     DA : 1838295
@@ -20,11 +24,11 @@ class AffichageGraph extends React.Component {
         //Ici on indique la taille du labyrinthe. Le chiffre apres le * est la variation que notre chiffre pourrais avoir dans les positifs
         // et le chiffre apres le + indique la plus petite valeur. La largeur du labyrithe est alératoire, mais la hauteur seras toujours
         // 4 de plus que la largeur.
-        var labyrintheWidth = Math.floor(Math.random() * 10) + 30;
-        while (labyrintheWidth % 3 === 0) {
-            labyrintheWidth = Math.floor(Math.random() * 10) + 30;
+        var labyrintheWidth = Math.floor(Math.random() * 6) + 40;
+        while (labyrintheWidth === 42 || labyrintheWidth === 41) {
+            labyrintheWidth = Math.floor(Math.random() * 6) + 40;
         }
-        var labyrintheHeight = labyrintheWidth + 4;
+        var labyrintheHeight = labyrintheWidth;
         //Ici on instancie le nombre maximum de node
         var nbNodes = labyrintheWidth * labyrintheHeight;
 
@@ -41,7 +45,7 @@ class AffichageGraph extends React.Component {
                 tableauNodes.push({ id: i, color: "#D83D3D", groupe: "Chemin", x: cmptx, y: cmpty });
             }
 
-            //Indique les murs du labyrinthe
+            //Indique les chemins du labyrinthe
             else {
                 tableauNodes.push({ id: i, color: "#D5C586", groupe: "Chemin", x: cmptx, y: cmpty });
             }
@@ -58,6 +62,13 @@ class AffichageGraph extends React.Component {
 
         //Appele la fonction pour créer les murs du labyrinthe
         this.creerMurs(labyrintheWidth, labyrintheHeight, tableauNodes);
+
+        //s'assure que le labyrinthe soit finissable
+        tableauNodes.forEach(node => {
+            if (node.id === murPourFinirLabyrinthe - 1 || node.id === murPourFinirLabyrinthe || node.id === murPourFinirLabyrinthe + 1) {
+                node.color = "#D5C586";
+            }
+        });
 
         //Instancie le state pour le graphique
         this.state = {
@@ -82,7 +93,7 @@ class AffichageGraph extends React.Component {
         //Insitancie les murs de haut en bas
         for (var i = 0; i < height; i++) {
             tableauNodes.forEach(node => {
-                if (node.id === (width * i) + Math.round(width / 2) - 1) {
+                if (node.id === (width * i) + Math.round(width / 2 - .5)) {
                     node.color = "#6D6D6D";
                     tabIdNodesTemp.push(node.id);
                 }
@@ -95,6 +106,7 @@ class AffichageGraph extends React.Component {
             cheminTemp = Math.floor(Math.random() * (tabIdNodesTemp.length - 1));
         }
         tableauNodes[tabIdNodesTemp[cheminTemp]].color = "#D5C586";
+        murPourFinirLabyrinthe = tabIdNodesTemp[cheminTemp];
 
         this.creerMursGaucheDroite(tabIdNodesTemp[Math.round(tabIdNodesTemp.length / 2) - 1], Math.round(width / 2), tableauNodes, height, width);
     }
@@ -113,27 +125,27 @@ class AffichageGraph extends React.Component {
     */
     creerMursGaucheDroite(depart, maxmin, tableauNodes, maxminHautbas, width) {
         // Stop l'algoritme si il est rendu trop proche d'un mur
-        if (maxmin > 4) {
+        if (maxmin > 3) {
             var cheminTemp = 0;
 
             //Instancie les murs de chaque côté du depart
             tableauNodes.forEach(node => {
-                if (node.id > depart - maxmin + 1 && node.id < depart + maxmin - 1) {
+                if (node.id > depart - maxmin + (maxmin / 6) && node.id < depart + maxmin - (maxmin / 6) - 1) {
                     node.color = "#6D6D6D";
                 }
             });
 
             //Créer le trou dans le murs du coté gauche
-            cheminTemp = Math.floor(Math.random() * (maxmin)) + depart - maxmin;
+            cheminTemp = Math.floor(Math.random() * (maxmin - Math.round(maxmin / 6 - .5))) + depart - maxmin + Math.round(maxmin / 4);
             while (cheminTemp === depart || cheminTemp === depart - Math.round(maxmin / 2)) {
-                cheminTemp = Math.floor(Math.random() * (maxmin)) + depart - maxmin;
+                cheminTemp = Math.floor(Math.random() * (maxmin - Math.round(maxmin / 4 - .5))) + depart - maxmin + Math.round(maxmin / 4 - .5);
             }
             tableauNodes[cheminTemp].color = "#D5C586";
 
             //Créer le trou dans le murs du coté droit
-            cheminTemp = Math.floor(Math.random() * (maxmin)) + depart - 1;
-            while (cheminTemp === depart || cheminTemp === depart + Math.round(maxmin / 2)) {
-                cheminTemp = Math.floor(Math.random() * (maxmin)) + depart;
+            cheminTemp = Math.floor(Math.random() * (maxmin - Math.round(maxmin / 6 - 2))) + depart - Math.round(maxmin / 4);
+            while (cheminTemp === depart + 1 || cheminTemp === depart + Math.round(maxmin / 2)) {
+                cheminTemp = Math.floor(Math.random() * (maxmin - Math.round(maxmin / 4 - 2))) + depart + Math.round(maxmin / 4);
             }
             tableauNodes[cheminTemp].color = "#D5C586";
 
@@ -158,7 +170,7 @@ class AffichageGraph extends React.Component {
     */
     creerMursHautBas(depart, maxmin, tableauNodes, maxminGaucheDroite, width) {
         // Stop l'algoritme si il est rendu trop proche d'un mur
-        if (maxmin > 6) {
+        if (maxmin > 3) {
             var tabIdNodesPlus = [];
             var tabIdNodesMoins = [];
             var cheminTemp = 0;
@@ -178,15 +190,15 @@ class AffichageGraph extends React.Component {
             });
 
             //Créer le trou dans le murs en bas
-            cheminTemp = Math.floor(Math.random() * (tabIdNodesMoins.length - 1));
-            while (cheminTemp === Math.round(tabIdNodesMoins.length / 2)) {
-                cheminTemp = Math.floor(Math.random() * (tabIdNodesMoins.length - 1));
+            cheminTemp = Math.floor(Math.random() * (tabIdNodesMoins.length - 2));
+            while (cheminTemp === Math.round(tabIdNodesMoins.length / 2) || tabIdNodesMoins[cheminTemp] === depart) {
+                cheminTemp = Math.floor(Math.random() * (tabIdNodesMoins.length - 2));
             }
             tableauNodes[tabIdNodesMoins[cheminTemp]].color = "#D5C586";
 
             //Créer le trou dans le murs en haut
             cheminTemp = Math.floor(Math.random() * (tabIdNodesPlus.length - 1));
-            while (cheminTemp === Math.round(tabIdNodesPlus.length / 2)) {
+            while (cheminTemp === Math.round(tabIdNodesPlus.length / 2) || tabIdNodesPlus[cheminTemp] === depart) {
                 cheminTemp = Math.floor(Math.random() * (tabIdNodesPlus.length - 1));
             }
             tableauNodes[tabIdNodesPlus[cheminTemp]].color = "#D5C586";
@@ -209,7 +221,7 @@ class AffichageGraph extends React.Component {
             },
             nodes: {
                 shape: 'square',
-                size : 50
+                size: 50
             },
             interaction: {
                 dragNodes: false,
